@@ -167,11 +167,11 @@ jobs:
             exit 1
           fi
           # 2) prove the failure was REAL DETECTION, not an install/CLI/config error masquerading as
-          #    one: re-run the scanner (installed by the action above) and require the exact
-          #    signature + INFECTED verdict. A setup error here fails to match -> the job goes red.
-          out="$(saw scan "$GITHUB_WORKSPACE" -c tests/detection-check.yml --no-stream 2>&1 || true)"
-          echo "$out"
-          if echo "$out" | grep -q "INFECTED" && echo "$out" | grep -q "gitignore-autopush-markers"; then
+          #    one: re-run the scanner (installed by the action above) and require, in its
+          #    machine-readable report, the exact signature + the infected verdict. A setup error
+          #    here fails to match -> the job goes red.
+          report="$(saw scan "$GITHUB_WORKSPACE" -c tests/detection-check.yml --no-stream --json 2>/dev/null || true)"
+          if printf '%s' "$report" | python3 -c 'import json, sys; r = json.load(sys.stdin); ids = {f.get("signature_id") for t in r.get("results", []) for f in t.get("findings", [])}; print("verdict infected:", r.get("any_infected"), "signatures:", sorted(i for i in ids if i)); sys.exit(0 if r.get("any_infected") and "gitignore-autopush-markers" in ids else 1)'; then
             echo "Detection verified: INFECTED + gitignore-autopush-markers."
           else
             echo "::error::planted indicator was NOT actually detected — a setup/config error masqueraded as detection."
