@@ -1,6 +1,6 @@
 # Require maintainer review for the files that DEFINE the security gate.
 #
-# Strix scans its own repo (.github/workflows/worm-guard.yml), but that gate runs the action code
+# SAW Guard scans its own repo (.github/workflows/saw-guard.yml), but that gate runs the action code
 # and allowlist FROM THE PULL REQUEST UNDER REVIEW — so it cannot, by itself, stop a PR that weakens
 # it (e.g. neutering action.yml or widening config/security.yml's allowlist). Branch protection +
 # code-owner review of these paths is the real control.

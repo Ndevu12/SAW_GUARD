@@ -1,0 +1,21 @@
+name: SAW Guard — block infected merges
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  saw-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+        with:
+          version: '0.12.3'
+          config-file: config/security.yml

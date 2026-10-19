@@ -1,6 +1,6 @@
-# StayAwakeBot Strix
+# SAW Guard
 
-The night-owl that hunts supply-chain worms. **Strix** is a thin GitHub Action that installs
+The night-owl that hunts supply-chain worms. **SAW Guard** is a thin GitHub Action that installs
 the published [`stayawakebot`](https://pypi.org/project/stayawakebot/) scanner from PyPI and runs
 it against your checked-out repository, failing CI when it finds self-propagating worm indicators —
 obfuscated loaders, fake fonts, VS Code auto-run tasks, and evil merges. The detection engine lives
@@ -9,29 +9,37 @@ in the package; this Action is just the CI wrapper.
 ## Usage
 
 ```yaml
-name: Worm scan
-on: [push, pull_request]
+name: SAW Guard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  strix:
+  saw-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 0          # full history so evil-merge detection works
-      - uses: Ndevu12/strix@v0.1.4   # pin a release tag (or a commit SHA — see Versioning)
+          fetch-depth: 0
+      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
         with:
-          version: ''                     # blank = latest; pin in production
-          config-file: config/security.yml # your saw config (optional)
+          version: '0.12.3'
+          config-file: config/security.yml
 ```
+
+Here `93fe465d…` is SAW Guard v0.1.4 and `3d3c42e5…` is `actions/checkout` v7.0.1. `version` pins
+the `stayawakebot` release from PyPI, 0.12.3 here; left blank it tracks the latest. `config-file` is
+your committed saw allowlist and is optional.
 
 `fetch-depth: 0` is required for evil-merge detection (it needs the full commit graph). Deploying
 this as a required check is the whole point — see the [hardening checklist](docs/HARDENING.md).
 
-**Install and keep it current with `saw guard`.** From the `stayawakebot` package, `saw guard setup` installs this gate **SHA-pinned to the latest Strix release** and proposes pin bumps via PR, and `saw guard check` verifies it is present, SHA-pinned, current, and a required check — across a single repo or a whole account/org. It is the automated path to the hardening checklist below; the snippet above is the manual equivalent.
+**Install and keep it current with `saw guard`.** From the `stayawakebot` package, `saw guard setup` installs this gate **SHA-pinned to the latest SAW Guard release** and proposes pin bumps via PR, and `saw guard check` verifies it is present, SHA-pinned, current, and a required check — across a single repo or a whole account/org. It is the automated path to the hardening checklist below; the snippet above is the manual equivalent.
 
 ## Inputs
 
@@ -68,20 +76,20 @@ Findings can also travel to code scanning, a run artifact, and a sticky PR comme
 
 ## Documentation
 
-- **[Gating & verdicts](docs/GATING.md)** — how the `fail-on` tiers work and why Strix fails closed.
+- **[Gating & verdicts](docs/GATING.md)** — how the `fail-on` tiers work and why SAW Guard fails closed.
 - **[Surfacing findings](docs/SURFACING_FINDINGS.md)** — SARIF code scanning, evidence artifacts, the
   sticky PR comment, and the redacted CI-log report.
 - **[Auto-remediation](docs/REMEDIATION.md)** — the `remediate: pr` rolling cleanup PR and its
   read-only fallbacks.
 - **[Configuration](docs/CONFIGURATION.md)** — your committed `saw` config and safe allowlist scoping.
 - **[Security model & hardening](docs/HARDENING.md)** — the pre-merge threat model and the hardening
-  checklist; copy [`examples/worm-guard.yml`](examples/worm-guard.yml) to start.
+  checklist; copy [`examples/saw-guard.yml`](examples/saw-guard.yml) to start.
 
 ## Versioning
 
-Strix is `0.x` (pre-1.0). In order of preference:
+SAW Guard is `0.x` (pre-1.0). In order of preference:
 
-- **A commit SHA — `Ndevu12/strix@<sha>`.** The security-sound choice, so the gate's own logic can't
+- **A commit SHA — `Ndevu12/SAW_GUARD@<sha>`.** The security-sound choice, so the gate's own logic can't
   change under you. This is what `saw guard setup` emits.
 - **An exact release tag — `@v0.1.4`.** Reproducible; bump it deliberately.
 - **A moving alias — `@v0`** (or the legacy `@v1`). Points at the latest `0.x` release, advanced as
