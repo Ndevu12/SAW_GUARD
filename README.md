@@ -49,7 +49,7 @@ this as a required check is the whole point — see the [hardening checklist](do
 | `config-file` | `''` | Repo-relative path to your committed `saw` config whose `settings` and `allowlist` govern the scan — the **single source of truth**. Defaults to the conventional `config/security.yml` when your repo ships one; otherwise the scanner's built-in defaults are used. See [Configuration](docs/CONFIGURATION.md). |
 | `fail-on` | `infected` | Verdict tier that turns the gate red: `infected`, `suspicious`, or `never` (report-only). See [Gating & verdicts](docs/GATING.md). |
 | `require-db` | `false` | `true` passes `--require-db`: fail when the offline advisory DB is absent or corrupt instead of silently degrading to the inline seed — for gates that must not lose coverage without noticing. |
-| `remediate` | `off` | `pr` runs `saw fix --pr` after an infected verdict: pushes the rolling `security/auto-clean` branch and opens/updates **one** cleanup PR per repo. The gate stays red. See [Auto-remediation](docs/REMEDIATION.md). |
+| `remediate` | `off` | `pr` runs `saw fix --pr` after an infected verdict: pushes the rolling `security/auto-clean` branch and opens/updates **one** cleanup PR per repo. The gate stays red. The `remediation` output says what it came to, and anything short of a PR is flagged on the run with its cause. See [Auto-remediation](docs/REMEDIATION.md). |
 | `github-token` | workflow token | Token used by `remediate: pr` and the opt-in `pr-comment`. Pass a PAT/App token if the fix PR itself must trigger your CI (events created with the default `GITHUB_TOKEN` don't). |
 | `upload-sarif` | `false` | `true` uploads the scanner's **redacted** SARIF to GitHub code scanning → Security tab + **inline annotation on the exact line**. Additive: never changes the gate. Needs `security-events: write`. Degrades to a notice (never fails) when unsupported, on a fork PR, or when the permission is absent. See [Surfacing findings](docs/SURFACING_FINDINGS.md). |
 | `upload-artifact` | `false` | `true` uploads the **redacted** reports (JSON + Markdown), the SARIF, and any `sab-patches/*.patch` as a run artifact. Needs no extra permission (works on forks). Never uploads the full-evidence report or the raw infected file. See [Surfacing findings](docs/SURFACING_FINDINGS.md). |
@@ -68,6 +68,7 @@ report-only runs:
 | `findings` | `10` | Total findings across all targets. |
 | `report` | `/tmp/…` | Path to the **full-evidence** JSON report on the runner (raw evidence — never uploaded as an artifact). |
 | `sarif` | `/tmp/…` | Path to the **redacted** SARIF 2.1.0 report on the runner, or empty if the installed scanner can't emit SARIF. Upload it yourself if you'd rather scope `security-events: write` in your own workflow. |
+| `remediation` | `pr` | What `remediate: pr` came to: `pr`, `fork-pr`, `patch`, `issue`, `prepared`, `skipped` or `failed`, or `unknown` when the installed scanner can't say. Empty when remediation did not run. |
 
 On an infected/suspicious/aborted run, an **actionable, redacted** summary is appended to the job's
 **step summary**, and the CI **log** shows the full findings breakdown (like a local `saw scan`).

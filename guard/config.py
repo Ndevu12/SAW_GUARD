@@ -29,6 +29,8 @@ _ENV = {
     "scan_rc": "SAW_GUARD_SCAN_RC",               # saw scan exit code: 0 clean / 1 infected / 2 usage
     "config_input": "SAW_GUARD_CONFIG_INPUT",     # the workflow's config-file input (for the repro command)
     "patches": "SAW_GUARD_PATCHES",               # "true" when saw fix wrote sab-patches/*.patch
+    "remediation_report": "SAW_GUARD_REMEDIATION_REPORT",  # what `saw fix --pr --json` printed
+    "github_output": "GITHUB_OUTPUT",             # the step's outputs file (GitHub-provided)
 }
 
 
@@ -46,6 +48,8 @@ class Config:
     scan_rc: str = ""
     config_input: str = ""
     patches: str = "false"
+    remediation_report: str = ""
+    github_output: str = ""
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Config":
