@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-19
+
 ### Added
 
 - **Remediation says what it came to (#26).** A `remediation` output reports whether
@@ -23,7 +25,7 @@ All notable changes to this project are documented here. The format is based on
   SAW Guard, and the evidence artifact is `saw-guard-evidence-<job>`; a PR comment it posted under its
   earlier name is still updated rather than posted again. The example to copy is
   `examples/saw-guard.yml`, and it and the README pin SAW Guard and `actions/checkout` by commit SHA
-  and the scanner at 0.12.3, as code only; what each line does is in the text beside it.
+  and the current scanner release, as code only; what each line does is in the text beside it.
 - **Docs: point consumers at `saw guard`** (from the `stayawakebot` package) as the automated way to install and verify this gate. `saw guard setup` installs it SHA-pinned to the latest release and opens pin-bump PRs; `saw guard check` verifies it is present, SHA-pinned, current, and a required check. The manual copy-paste + hardening checklist remain the source of truth (the least-privilege `contents: read` default and remediation-as-opt-in posture are unchanged).
 
 ## [0.1.4] — 2026-07-15
@@ -84,7 +86,9 @@ All notable changes to this project are documented here. The format is based on
 - Initial release: install the published [`stayawakebot`](https://pypi.org/project/stayawakebot/)
   scanner and gate CI on its verdict.
 
-[Unreleased]: https://github.com/Ndevu12/strix/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/Ndevu12/SAW_GUARD/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Ndevu12/SAW_GUARD/compare/v0.1.4...v0.2.0
+[0.1.4]: https://github.com/Ndevu12/SAW_GUARD/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/Ndevu12/strix/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Ndevu12/strix/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Ndevu12/strix/compare/v0.1.0...v0.1.1

@@ -28,12 +28,12 @@ jobs:
           fetch-depth: 0
       - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
         with:
-          version: '0.12.3'
+          version: '0.13.0'
           config-file: config/security.yml
 ```
 
 Here `93fe465d…` is SAW Guard v0.1.4 and `3d3c42e5…` is `actions/checkout` v7.0.1. `version` pins
-the `stayawakebot` release from PyPI, 0.12.3 here; left blank it tracks the latest. `config-file` is
+the `stayawakebot` release from PyPI, 0.13.0 here; left blank it tracks the latest. `config-file` is
 your committed saw allowlist and is optional.
 
 `fetch-depth: 0` is required for evil-merge detection (it needs the full commit graph). Deploying
