@@ -1,4 +1,4 @@
-# StayAwakeBot Strix — Surfacing findings (SARIF, artifacts, PR comment, CI log)
+# SAW Guard — Surfacing findings (SARIF, artifacts, PR comment, CI log)
 
 When the gate goes red on an infection it can't auto-fix, the findings should meet a reviewer where
 they look — not only in the raw log. Three **opt-in, additive** surfaces do that. They are **purely
@@ -17,7 +17,7 @@ permissions:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: Ndevu12/strix@v1
+      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
         with:
           upload-sarif: true      # Security tab + inline annotation on the exact line
           upload-artifact: true   # redacted reports + SARIF + fix patches, attached to the run
@@ -37,7 +37,7 @@ GitHub token permissions are **per-job** (there is no step-level `permissions:`)
 **only** in the workflow that enables the matching feature, and never blanket-grant `write-all` or
 flip the repo-default token to read/write:
 
-- `upload-sarif: true` → `security-events: write`. Nothing else in Strix uses it; the scan and gate
+- `upload-sarif: true` → `security-events: write`. Nothing else in SAW Guard uses it; the scan and gate
   stay on `contents: read`.
 - `pr-comment: true` → `pull-requests: write`.
 - `upload-artifact: true` → **no extra permission** (artifact upload uses the Actions runtime token,
@@ -46,7 +46,7 @@ flip the repo-default token to read/write:
 ## Fork PRs & missing permissions degrade, never fail
 
 A `pull_request` from a fork has a read-only token, so SARIF upload and the PR comment can't
-authenticate. Strix falls back to a `::notice::` and carries on — the artifact (which *does* work
+authenticate. SAW Guard falls back to a `::notice::` and carries on — the artifact (which *does* work
 from a fork) still preserves the evidence, and the gate result is unchanged.
 
 ## Everything uploaded is redacted
@@ -65,10 +65,10 @@ separate job), leave `upload-sarif` off and use the `sarif` output with
 [`github/codeql-action/upload-sarif`](https://github.com/github/codeql-action):
 
 ```yaml
-      - uses: Ndevu12/strix@v1
-        id: strix
+      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+        id: guard
       - uses: github/codeql-action/upload-sarif@v3
-        if: always() && steps.strix.outputs.sarif != ''
+        if: always() && steps.guard.outputs.sarif != ''
         with:
-          sarif_file: ${{ steps.strix.outputs.sarif }}
+          sarif_file: ${{ steps.guard.outputs.sarif }}
 ```

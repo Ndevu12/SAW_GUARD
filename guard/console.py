@@ -5,7 +5,7 @@ Parity with a local ``saw scan`` run: the CI terminal should show the verdict an
 findings breakdown, not just a one-line verdict (issue #12). But CI logs can be public and are
 cached forever, so this renders from the **redacted** ``latest.json`` and prints **no evidence at
 all** — only each finding's location and metadata. Every attacker-controlled field (a ``path``)
-goes through :func:`strix.logsafe.logsafe`, and the list is **bounded** so a repo with thousands of
+goes through :func:`guard.logsafe.logsafe`, and the list is **bounded** so a repo with thousands of
 findings can't flood the log.
 
 This complements the GitHub-UI surfaces (#10: SARIF annotations, the step summary, the PR comment);
@@ -13,8 +13,8 @@ this is the in-terminal view that matches local usage.
 """
 from __future__ import annotations
 
-from strix.logsafe import logsafe
-from strix.report import iter_findings
+from guard.logsafe import logsafe
+from guard.report import iter_findings
 
 # Cap the per-finding lines so a pathological repo can't flood the log; the full list still lives in
 # the JSON report / SARIF.

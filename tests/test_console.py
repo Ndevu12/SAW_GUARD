@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strix.console.render_log — the redacted, injection-safe, bounded CI-log report.
+"""guard.console.render_log — the redacted, injection-safe, bounded CI-log report.
 
 Asserts the three log invariants of issue #12: no raw evidence reaches the log, an attacker-
 controlled path can't inject a workflow command / control sequence, and the list is bounded.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import unittest
 
-from strix.console import DEFAULT_CAP, render_log
+from guard.console import DEFAULT_CAP, render_log
 
 RAW_EVIDENCE = "RAW_PAYLOAD_SECRET_do_not_ship"
 

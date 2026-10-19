@@ -2,13 +2,13 @@
 """Injection-safe Markdown primitives for attacker-controlled values.
 
 A repo can contain a file named ``x`](evil).md`` or one whose name carries a newline or a
-bidi override, and Strix renders finding paths into the step summary and PR comments. This
+bidi override, and SAW Guard renders finding paths into the step summary and PR comments. This
 module is the ONE place that turns such a value into something safe to display; every other
 module renders untrusted strings only through :func:`code` / :func:`yaml_dq`.
 
 ``sanitize``/``code`` are ported from the scanner's own contract (``stayawake.bots.security.
 pr._sanitize``/``_code`` — "invariant #5 of #1183; fuller contract in #1184", the same #1184
-issue #10 cites), so Strix and the scanner escape identically. Kept deliberately tiny and
+issue #10 cites), so SAW Guard and the scanner escape identically. Kept deliberately tiny and
 dependency-free (stdlib ``unicodedata`` only) so it stays easy to audit.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ def strip_unprintable(s: str) -> str:
     """Replace every control/format char (Unicode category C*, incl. the ANSI ESC and NUL) and
     line/paragraph separator (Zl/Zp — newlines, NEL, U+2028/9, bidi overrides like RLO) with a
     space. The shared, audited core of both the Markdown escaper (:func:`sanitize`) and the CI-log
-    escaper (:func:`strix.logsafe.logsafe`) — one place to reason about which code points are
+    escaper (:func:`guard.logsafe.logsafe`) — one place to reason about which code points are
     neutralized."""
     return "".join(
         ch if not (unicodedata.category(ch)[0] == "C"

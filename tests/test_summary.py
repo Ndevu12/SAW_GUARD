@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strix.summary.render — the two hard properties on real payloads.
+"""guard.summary.render — the two hard properties on real payloads.
 
 A hostile finding path can neither break out of its code span nor inject Markdown / HTML /
 a ``::``-workflow command; a raw ``evidence`` snippet never appears; a clean completed scan
@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import unittest
 
-from strix.config import Config
-from strix.summary import MARKER, render
+from guard.config import Config
+from guard.summary import MARKER, render
 
 HOSTILE_PATH = "a`$(id)`](http://evil)|x\nsecond::set-output name=k::v.js"
 HOSTILE_DESC = "d <img src=x onerror=alert(1)> [link](http://evil) `tick`"

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Entrypoint / command dispatcher for the strix helpers.
+"""Entrypoint / command dispatcher for the guard helpers.
 
 Two commands, both imperative shells around a pure renderer:
 
-  * ``python3 -m strix summary`` (default) — render the actionable findings summary and write it to
+  * ``python3 -m guard summary`` (default) — render the actionable findings summary and write it to
     the step summary + the PR-comment source file (issue #10).
-  * ``python3 -m strix log`` — print the redacted findings report to **stdout** for the CI log
+  * ``python3 -m guard log`` — print the redacted findings report to **stdout** for the CI log
     (issue #12).
 
 Run with the repo root on ``PYTHONPATH`` (the action passes ``PYTHONPATH=$GITHUB_ACTION_PATH``).
@@ -16,10 +16,10 @@ from __future__ import annotations
 
 import sys
 
-from strix.config import Config
-from strix.console import render_log
-from strix.report import load
-from strix.summary import render
+from guard.config import Config
+from guard.console import render_log
+from guard.report import load
+from guard.summary import render
 
 
 def _load(cfg: Config) -> dict | None:
@@ -67,7 +67,7 @@ _COMMANDS = {"summary": run_summary, "log": run_log}
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv if argv is None else argv
-    command = argv[1] if len(argv) > 1 else "summary"   # bare `-m strix` == summary (back-compat)
+    command = argv[1] if len(argv) > 1 else "summary"   # bare `-m guard` == summary (back-compat)
     return _COMMANDS.get(command, run_summary)(Config.from_env())
 
 
