@@ -1,4 +1,4 @@
-name: 'StayAwakeBot Strix'
+name: 'SAW Guard'
 description: 'Hunt supply-chain worm indicators — obfuscated loaders, fake fonts, VS Code auto-run, evil merges — and fail CI.'
 author: 'Ndevu12'
 branding:
@@ -13,7 +13,7 @@ inputs:
   config-file:
     description: >-
       Repo-relative path to your committed `saw` config whose `settings` and `allowlist` govern
-      the scan — the single source of truth; Strix adds no settings of its own. Defaults to the
+      the scan — the single source of truth; SAW Guard adds no settings of its own. Defaults to the
       conventional `config/security.yml` when your repo ships one; otherwise the scanner's
       built-in defaults are used.
     required: false
@@ -153,7 +153,7 @@ runs:
           infected|suspicious|never) ;;
           *) echo "::error::fail-on must be 'infected', 'suspicious', or 'never' (got '${{ inputs.fail-on }}')." >&2; exit 1;;
         esac
-        # Config source — single source of truth; Strix synthesizes nothing. An explicit
+        # Config source — single source of truth; SAW Guard synthesizes nothing. An explicit
         # config-file wins; else the conventional config/security.yml when the repo ships one;
         # else the scanner's built-in defaults. The positional target scopes the scan to the
         # checked-out repo, overriding any `targets` in the config. The resolved path is exported
@@ -188,9 +188,9 @@ runs:
         # aborted-scan summary — can find the report and the scanner's redacted bundle by path.
         # Defined ONCE here and exported to the job env so every later step shares it (no repeated
         # literal); set before any fail-closed exit so the always() summary step still sees it.
-        reports_dir="$RUNNER_TEMP/strix-reports"
+        reports_dir="$RUNNER_TEMP/saw-guard-reports"
         mkdir -p "$reports_dir"
-        echo "STRIX_REPORTS_DIR=$reports_dir" >> "$GITHUB_ENV"
+        echo "SAW_GUARD_REPORTS_DIR=$reports_dir" >> "$GITHUB_ENV"
         if saw scan -h 2>/dev/null | grep -q -- '--reports-dir'; then
           extra+=(-d "$reports_dir")
         fi
@@ -199,7 +199,7 @@ runs:
         # The file is the scanner's own REDACTED SARIF (evidence fingerprinted, not raw).
         sarif=""
         if saw scan -h 2>/dev/null | grep -q -- '--sarif'; then
-          sarif="$reports_dir/strix.sarif"
+          sarif="$reports_dir/saw-guard.sarif"
           extra+=(--sarif "$sarif")
         fi
         report="$reports_dir/report.json"
@@ -216,7 +216,7 @@ runs:
         infected=$(python3 -c "import json;print(sum(1 for r in (json.load(open('$report')).get('results') or []) if r.get('infected') or r.get('verdict')=='infected'))")
         suspicious=$(python3 -c "import json;print(sum(1 for r in (json.load(open('$report')).get('results') or []) if (r.get('suspicious') or r.get('verdict')=='suspicious') and not (r.get('infected') or r.get('verdict')=='infected')))")
         findings=$(python3 -c "import json;print(int((json.load(open('$report')).get('summary') or {}).get('findings',0) or 0))")
-        echo "Strix: scanned ${targets} target(s); infected=${infected}, suspicious=${suspicious}, findings=${findings}, scan rc=${rc}."
+        echo "SAW Guard: scanned ${targets} target(s); infected=${infected}, suspicious=${suspicious}, findings=${findings}, scan rc=${rc}."
         if [ "$rc" != "0" ] && [ "$rc" != "1" ]; then
           echo "::error::saw scan exited ${rc} (usage/internal error — or, with require-db, a missing/corrupt advisory DB) — failing closed." >&2; exit "${rc:-1}"
         fi
@@ -244,10 +244,10 @@ runs:
         if [ -f "$reports_dir/latest.md" ]; then
           cat "$reports_dir/latest.md" >> "$GITHUB_STEP_SUMMARY"
         else
-          echo "**Strix**: ${verdict} — ${targets} target(s), ${findings} finding(s)." >> "$GITHUB_STEP_SUMMARY"
+          echo "**SAW Guard**: ${verdict} — ${targets} target(s), ${findings} finding(s)." >> "$GITHUB_STEP_SUMMARY"
         fi
 
-    - name: Strix — render the full scan report to the log (redacted, issue #12)
+    - name: SAW Guard — render the full scan report to the log (redacted, issue #12)
       if: always()
       shell: bash
       # Parity with a local `saw scan`: show the verdict AND the full findings breakdown in the CI
@@ -258,9 +258,9 @@ runs:
       # old pinned scanner didn't write latest.json, it quietly no-ops (today's terse log).
       run: |
         set +e
-        STRIX_REDACTED="$STRIX_REPORTS_DIR/latest.json" \
-        PYTHONPATH="$GITHUB_ACTION_PATH" python3 -m strix log \
-          || echo "::notice::Strix: could not render the scan report to the log (non-fatal)."
+        SAW_GUARD_REDACTED="$SAW_GUARD_REPORTS_DIR/latest.json" \
+        PYTHONPATH="$GITHUB_ACTION_PATH" python3 -m guard log \
+          || echo "::notice::SAW Guard: could not render the scan report to the log (non-fatal)."
         exit 0
 
     - name: Remediate — saw fix --pr (rolling security/auto-clean PR)
@@ -290,9 +290,9 @@ runs:
         if compgen -G "$GITHUB_WORKSPACE/sab-patches/*.patch" >/dev/null; then
           # Read-only fallback fired: the branch could not be pushed, so the fix exists only as
           # patch files on this ephemeral runner. Say so where a human will see it.
-          echo "**Strix remediation**: no push access — fix saved to \`sab-patches/*.patch\` on the runner. Set \`upload-artifact: true\` to keep it with the run, or grant \`contents: write\` + \`pull-requests: write\` for a fix PR." >> "$GITHUB_STEP_SUMMARY"
+          echo "**SAW Guard remediation**: no push access — fix saved to \`sab-patches/*.patch\` on the runner. Set \`upload-artifact: true\` to keep it with the run, or grant \`contents: write\` + \`pull-requests: write\` for a fix PR." >> "$GITHUB_STEP_SUMMARY"
         else
-          echo "**Strix remediation**: \`saw fix --pr\` ran — see the rolling \`security/auto-clean\` PR on this repo." >> "$GITHUB_STEP_SUMMARY"
+          echo "**SAW Guard remediation**: \`saw fix --pr\` ran — see the rolling \`security/auto-clean\` PR on this repo." >> "$GITHUB_STEP_SUMMARY"
         fi
 
     # ── Visibility layer (issue #10) — strictly ADDITIVE, strictly NON-FATAL ────────────────
@@ -303,33 +303,33 @@ runs:
     # `continue-on-error`, so each `run:` step swallows its own failures with `|| ::notice::` and
     # ends `exit 0` — a missing permission, a fork PR, or even a bug degrades to a notice.
 
-    - name: Strix — actionable findings summary (step summary + PR-comment source)
+    - name: SAW Guard — actionable findings summary (step summary + PR-comment source)
       if: always()
       shell: bash
       # Runs even on an ABORTED (fail-closed) scan, so "red gate — now what?" is answered there too.
       # The renderer redacts (renders NO raw evidence) and escapes untrusted paths; see the
-      # strix package (run as `python3 -m strix`). Non-fatal by construction.
+      # guard package (run as `python3 -m guard`). Non-fatal by construction.
       env:
-        STRIX_VERDICT: ${{ steps.scan.outputs.verdict }}
-        STRIX_INFECTED: ${{ steps.scan.outputs.infected }}
-        STRIX_SUSPICIOUS: ${{ steps.scan.outputs.suspicious }}
-        STRIX_FINDINGS: ${{ steps.scan.outputs.findings }}
-        STRIX_SCAN_RC: ${{ steps.scan.outputs.scan-rc }}
-        STRIX_CONFIG_INPUT: ${{ inputs.config-file }}
+        SAW_GUARD_VERDICT: ${{ steps.scan.outputs.verdict }}
+        SAW_GUARD_INFECTED: ${{ steps.scan.outputs.infected }}
+        SAW_GUARD_SUSPICIOUS: ${{ steps.scan.outputs.suspicious }}
+        SAW_GUARD_FINDINGS: ${{ steps.scan.outputs.findings }}
+        SAW_GUARD_SCAN_RC: ${{ steps.scan.outputs.scan-rc }}
+        SAW_GUARD_CONFIG_INPUT: ${{ inputs.config-file }}
       run: |
         set +e
-        reports_dir="$STRIX_REPORTS_DIR"   # exported once by the scan step (single source of truth)
+        reports_dir="$SAW_GUARD_REPORTS_DIR"   # exported once by the scan step (single source of truth)
         patches=false
         compgen -G "$GITHUB_WORKSPACE/sab-patches/*.patch" >/dev/null 2>&1 && patches=true
-        STRIX_REPORT="$reports_dir/report.json" \
-        STRIX_REDACTED="$reports_dir/latest.json" \
-        STRIX_SUMMARY_OUT="$reports_dir/summary.md" \
-        STRIX_PATCHES="$patches" \
-        PYTHONPATH="$GITHUB_ACTION_PATH" python3 -m strix \
-          || echo "::notice::Strix: could not render the findings summary (non-fatal)."
+        SAW_GUARD_REPORT="$reports_dir/report.json" \
+        SAW_GUARD_REDACTED="$reports_dir/latest.json" \
+        SAW_GUARD_SUMMARY_OUT="$reports_dir/summary.md" \
+        SAW_GUARD_PATCHES="$patches" \
+        PYTHONPATH="$GITHUB_ACTION_PATH" python3 -m guard \
+          || echo "::notice::SAW Guard: could not render the findings summary (non-fatal)."
         exit 0
 
-    - name: Strix — upload SARIF to code scanning (best-effort, additive)
+    - name: SAW Guard — upload SARIF to code scanning (best-effort, additive)
       if: inputs.upload-sarif == 'true' && steps.scan.outputs.sarif != ''
       shell: bash
       # Uploads the scanner's REDACTED SARIF to code scanning → Security tab + inline annotation on
@@ -341,28 +341,28 @@ runs:
       run: |
         set +e
         if ! command -v gh >/dev/null 2>&1; then
-          echo "::notice::Strix: 'gh' unavailable (self-hosted runner?) — SARIF upload skipped; the SARIF is in the 'sarif' output / the artifact."
+          echo "::notice::SAW Guard: 'gh' unavailable (self-hosted runner?) — SARIF upload skipped; the SARIF is in the 'sarif' output / the artifact."
           exit 0
         fi
         if [ ! -s "$SARIF" ]; then
-          echo "::notice::Strix: SARIF file missing/empty — upload skipped."
+          echo "::notice::SAW Guard: SARIF file missing/empty — upload skipped."
           exit 0
         fi
-        b64="$RUNNER_TEMP/strix.sarif.b64"
+        b64="$RUNNER_TEMP/saw-guard.sarif.b64"
         if ! gzip -c "$SARIF" | base64 | tr -d '\n' > "$b64"; then
-          echo "::notice::Strix: could not encode SARIF — upload skipped."
+          echo "::notice::SAW Guard: could not encode SARIF — upload skipped."
           exit 0
         fi
         if jq -n --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF" --rawfile z "$b64" \
               '{commit_sha:$sha, ref:$ref, sarif:$z}' \
             | gh api --method POST "repos/$GITHUB_REPOSITORY/code-scanning/sarifs" --input - >/dev/null 2>&1; then
-          echo "Strix: uploaded SARIF to code scanning — findings will appear in the Security tab and as inline annotations."
+          echo "SAW Guard: uploaded SARIF to code scanning — findings will appear in the Security tab and as inline annotations."
         else
-          echo "::notice::Strix: SARIF upload skipped — needs 'security-events: write' (unavailable on fork PRs / not granted). Findings are still in the step summary and, if enabled, the artifact."
+          echo "::notice::SAW Guard: SARIF upload skipped — needs 'security-events: write' (unavailable on fork PRs / not granted). Findings are still in the step summary and, if enabled, the artifact."
         fi
         exit 0
 
-    - name: Strix — stage redacted evidence for the artifact
+    - name: SAW Guard — stage redacted evidence for the artifact
       if: inputs.upload-artifact == 'true'
       shell: bash
       # Stage REDACTED artifacts only. NEVER the full-evidence report.json and never the raw
@@ -370,10 +370,10 @@ runs:
       # removed lines therefore contain it) — kept because it is the remediation deliverable.
       run: |
         set +e
-        reports_dir="$STRIX_REPORTS_DIR"   # exported once by the scan step (single source of truth)
-        stage="$RUNNER_TEMP/strix-artifact"
+        reports_dir="$SAW_GUARD_REPORTS_DIR"   # exported once by the scan step (single source of truth)
+        stage="$RUNNER_TEMP/saw-guard-artifact"
         mkdir -p "$stage"
-        for f in latest.json latest.md summary.md strix.sarif; do
+        for f in latest.json latest.md summary.md saw-guard.sarif; do
           [ -f "$reports_dir/$f" ] && cp "$reports_dir/$f" "$stage/" 2>/dev/null
         done
         if compgen -G "$GITHUB_WORKSPACE/sab-patches/*.patch" >/dev/null 2>&1; then
@@ -382,20 +382,20 @@ runs:
         fi
         exit 0
 
-    - name: Strix — upload evidence artifact
+    - name: SAW Guard — upload evidence artifact
       if: inputs.upload-artifact == 'true'
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
       with:
-        # Per-job unique name (+ overwrite) so running Strix in more than one job of a workflow
+        # Per-job unique name (+ overwrite) so running SAW Guard in more than one job of a workflow
         # can't hit upload-artifact@v4's duplicate-name failure — which, being a `uses:` step,
         # couldn't be softened and would violate the additive/non-fatal contract.
-        name: strix-evidence-${{ github.job }}
-        path: ${{ runner.temp }}/strix-artifact
+        name: saw-guard-evidence-${{ github.job }}
+        path: ${{ runner.temp }}/saw-guard-artifact
         if-no-files-found: ignore
         overwrite: true
         retention-days: 7
 
-    - name: Strix — sticky PR comment with remediation guidance (best-effort, additive)
+    - name: SAW Guard — sticky PR comment with remediation guidance (best-effort, additive)
       if: inputs.pr-comment == 'true' && github.event_name == 'pull_request'
       shell: bash
       # Post ONE sticky comment (found & updated in place via a hidden marker), reusing the exact
@@ -408,31 +408,32 @@ runs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         set +e
-        body="$STRIX_REPORTS_DIR/summary.md"   # exported once by the scan step (single source of truth)
-        marker="<!-- strix-worm-scan-summary -->"
+        body="$SAW_GUARD_REPORTS_DIR/summary.md"   # exported once by the scan step (single source of truth)
+        marker="<!-- saw-guard-summary -->"
+        earlier_marker="<!-- strix-worm-scan-summary -->"
         repo="$GITHUB_REPOSITORY"
         if ! command -v gh >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
-          echo "::notice::Strix: 'gh'/'jq' unavailable — PR comment skipped."
+          echo "::notice::SAW Guard: 'gh'/'jq' unavailable — PR comment skipped."
           exit 0
         fi
         if [ ! -s "$body" ]; then
-          echo "::notice::Strix: no rendered summary — PR comment skipped."
+          echo "::notice::SAW Guard: no rendered summary — PR comment skipped."
           exit 0
         fi
         existing="$(gh api "repos/$repo/issues/$PR_NUMBER/comments" --paginate \
-                    --jq ".[] | select(.body|contains(\"$marker\")) | .id" 2>/dev/null | head -n1)"
+                    --jq ".[] | select((.body|contains(\"$marker\")) or (.body|contains(\"$earlier_marker\"))) | .id" 2>/dev/null | head -n1)"
         if [ -n "$existing" ] && [ "$existing" != "null" ]; then
           jq -n --rawfile b "$body" '{body:$b}' \
             | gh api --method PATCH "repos/$repo/issues/comments/$existing" --input - >/dev/null 2>&1 \
-            && echo "Strix: updated the sticky PR comment." \
-            || echo "::notice::Strix: could not update the PR comment (needs 'pull-requests: write'; unavailable on fork PRs)."
+            && echo "SAW Guard: updated the sticky PR comment." \
+            || echo "::notice::SAW Guard: could not update the PR comment (needs 'pull-requests: write'; unavailable on fork PRs)."
         elif [ "$VERDICT" != "clean" ]; then
           jq -n --rawfile b "$body" '{body:$b}' \
             | gh api --method POST "repos/$repo/issues/$PR_NUMBER/comments" --input - >/dev/null 2>&1 \
-            && echo "Strix: posted a sticky PR comment with remediation guidance." \
-            || echo "::notice::Strix: could not post the PR comment (needs 'pull-requests: write'; unavailable on fork PRs)."
+            && echo "SAW Guard: posted a sticky PR comment with remediation guidance." \
+            || echo "::notice::SAW Guard: could not post the PR comment (needs 'pull-requests: write'; unavailable on fork PRs)."
         else
-          echo "Strix: clean with no prior comment — nothing to post."
+          echo "SAW Guard: clean with no prior comment — nothing to post."
         fi
         exit 0
 
@@ -448,7 +449,7 @@ runs:
         suspicious='${{ steps.scan.outputs.suspicious }}'
         rc='${{ steps.scan.outputs.scan-rc }}'
         if [ "${{ inputs.fail-on }}" = "never" ]; then
-          echo "Strix: report-only (fail-on: never) — verdict '${{ steps.scan.outputs.verdict }}' does not gate."
+          echo "SAW Guard: report-only (fail-on: never) — verdict '${{ steps.scan.outputs.verdict }}' does not gate."
           exit 0
         fi
         if [ "$infected" -gt 0 ] || [ "$rc" = "1" ]; then
@@ -457,4 +458,4 @@ runs:
         if [ "${{ inputs.fail-on }}" = "suspicious" ] && [ "$suspicious" -gt 0 ]; then
           echo "::error::suspect-tier findings on ${suspicious} target(s) and fail-on is 'suspicious'." >&2; exit 1
         fi
-        echo "Strix: clean — all scanned targets are free of worm indicators."
+        echo "SAW Guard: clean — all scanned targets are free of worm indicators."

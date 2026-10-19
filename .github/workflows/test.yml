@@ -70,15 +70,15 @@ jobs:
           fi
 
   unit-tests:
-    name: Passes — strix unit tests (injection-safe rendering, redaction, config boundary)
+    name: Passes — SAW Guard unit tests (injection-safe rendering, redaction, config boundary)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5   # v4.3.1
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6.3.0
         with:
           python-version: '3.13'
-      - name: Run the strix package tests (stdlib unittest, no dependencies)
-        # The strix package is the only place attacker-controlled file paths and scan evidence are
+      - name: Run the guard package tests (stdlib unittest, no dependencies)
+        # The guard package is the only place attacker-controlled file paths and scan evidence are
         # rendered into Markdown, so its tests are the security regression gate: a path breaking
         # out of its code span, raw evidence leaking, or env access sliding back out of the single
         # Config boundary fails the job. Same invocation style as the scanner project's CI.
@@ -181,13 +181,13 @@ jobs:
       - name: Assert the CI-log report shows findings but redacts evidence (issue #12)
         if: always()
         # Integration proof for the log renderer: run the installed scanner to a REDACTED bundle,
-        # then render it the way the action does (`python3 -m strix log`). The log must show the
+        # then render it the way the action does (`python3 -m guard log`). The log must show the
         # planted finding AND must not contain its raw evidence bytes (`temp_auto_push.bat`), which
         # live only in saw's full-evidence output — never in the redacted report the renderer reads.
         run: |
-          rd="$RUNNER_TEMP/strix-logcheck"
+          rd="$RUNNER_TEMP/saw-guard-logcheck"
           saw scan "$GITHUB_WORKSPACE" -c tests/detection-check.yml -d "$rd" --no-stream >/dev/null 2>&1 || true
-          log="$(STRIX_REDACTED="$rd/latest.json" PYTHONPATH=. python3 -m strix log)"
+          log="$(SAW_GUARD_REDACTED="$rd/latest.json" PYTHONPATH=. python3 -m guard log)"
           echo "$log"
           if ! echo "$log" | grep -q "gitignore-autopush-markers"; then
             echo "::error::CI-log report did not show the planted finding"; exit 1

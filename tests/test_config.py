@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strix.config.Config — the single boundary to the environment.
+"""guard.config.Config — the single boundary to the environment.
 
 Asserts the env → field mapping, the defaults for unset vars, and — as a regression guard
 against sliding back to scattered ``os.environ.get`` calls — that the whole package reads the
@@ -11,8 +11,8 @@ import ast
 import pathlib
 import unittest
 
-from strix import config as config_mod
-from strix.config import Config
+from guard import config as config_mod
+from guard.config import Config
 
 
 def _env_accesses(path: pathlib.Path) -> int:
@@ -28,8 +28,8 @@ def _env_accesses(path: pathlib.Path) -> int:
 
 class TestConfig(unittest.TestCase):
     def test_from_env_maps_declared_vars(self):
-        cfg = Config.from_env({"STRIX_VERDICT": "infected", "STRIX_SCAN_RC": "1",
-                               "STRIX_CONFIG_INPUT": "config/security.yml"})
+        cfg = Config.from_env({"SAW_GUARD_VERDICT": "infected", "SAW_GUARD_SCAN_RC": "1",
+                               "SAW_GUARD_CONFIG_INPUT": "config/security.yml"})
         self.assertEqual(cfg.verdict, "infected")
         self.assertEqual(cfg.scan_rc, "1")
         self.assertEqual(cfg.config_input, "config/security.yml")
