@@ -2,7 +2,8 @@ name: Scanner pin freshness
 
 # The SAW Guard gate pins the `stayawakebot` scanner to an exact PyPI version for a reproducible
 # gate — but a pin goes stale, and a stale pin runs an out-of-date DETECTION ENGINE while you think
-# you're covered. Weekly (and on demand) this compares the pinned version against the latest PyPI
+# you're covered. Weekly, on demand, and whenever the gate's workflow changes on main, this
+# compares the pinned version against the latest PyPI
 # release and opens/updates ONE deduplicated issue when it has drifted behind, so the pin can't
 # silently rot. It NEVER fails a build and NEVER changes the gate — it only files a reminder.
 #
@@ -12,6 +13,10 @@ on:
   schedule:
     - cron: '0 7 * * 1'        # Mondays 07:00 UTC
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/saw-guard.yml
 
 permissions:
   contents: read
