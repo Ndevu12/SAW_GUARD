@@ -2,7 +2,7 @@
 """check_pin_freshness — the pure decision logic behind the scanner-pin-freshness workflow.
 
 The comparison MUST be numeric, not lexical (a string compare says "0.1.12" < "0.1.7", which would
-declare a fresh pin stale). And the version extractor must stay in sync with the real worm-guard.yml
+declare a fresh pin stale). And the version extractor must stay in sync with the real saw-guard.yml
 so the guard can't silently stop finding the pin.
 """
 from __future__ import annotations
@@ -28,10 +28,19 @@ class TestPinnedVersion(unittest.TestCase):
     def test_none_when_absent(self):
         self.assertIsNone(pin.pinned_version("no version key here\n"))
 
-    def test_matches_the_real_worm_guard_file(self):
+    def test_matches_the_real_saw_guard_file(self):
         # If someone reformats the pin line, this fails — the guard must keep finding it.
-        text = (_ROOT / ".github" / "workflows" / "worm-guard.yml").read_text(encoding="utf-8")
+        text = (_ROOT / ".github" / "workflows" / "saw-guard.yml").read_text(encoding="utf-8")
         self.assertIsNotNone(pin.pinned_version(text))
+
+
+class TestTheExamplesPinTheGatesScanner(unittest.TestCase):
+    def test_the_readme_and_the_example_pin_the_version_the_gate_pins(self):
+        gate = pin.pinned_version(
+            (_ROOT / ".github" / "workflows" / "saw-guard.yml").read_text(encoding="utf-8"))
+        for rel in ("README.md", "examples/saw-guard.yml"):
+            with self.subTest(file=rel):
+                self.assertEqual(pin.pinned_version((_ROOT / rel).read_text(encoding="utf-8")), gate)
 
 
 class TestIsStale(unittest.TestCase):

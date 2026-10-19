@@ -1,6 +1,6 @@
 name: Scanner pin freshness
 
-# The worm-guard gate pins the `stayawakebot` scanner to an exact PyPI version for a reproducible
+# The SAW Guard gate pins the `stayawakebot` scanner to an exact PyPI version for a reproducible
 # gate — but a pin goes stale, and a stale pin runs an out-of-date DETECTION ENGINE while you think
 # you're covered. Weekly (and on demand) this compares the pinned version against the latest PyPI
 # release and opens/updates ONE deduplicated issue when it has drifted behind, so the pin can't
@@ -37,11 +37,11 @@ jobs:
           # Ensure the dedup label exists (idempotent), then update the open issue if one exists,
           # else create it. One rolling issue — re-runs never spam new ones.
           gh label create scanner-pin-stale --color BFD4F2 \
-            --description "worm-guard's scanner pin has drifted behind the latest release" 2>/dev/null || true
-          title="Scanner pin is stale — worm-guard pins ${PINNED}, latest is ${LATEST}"
-          body="The worm-guard gate pins the \`stayawakebot\` scanner to **${PINNED}**, but the latest PyPI release is **${LATEST}**. A stale pin runs an out-of-date detection engine while the gate looks green.
+            --description "SAW Guard's scanner pin has drifted behind the latest release" 2>/dev/null || true
+          title="Scanner pin is stale — SAW Guard pins ${PINNED}, latest is ${LATEST}"
+          body="The SAW Guard gate pins the \`stayawakebot\` scanner to **${PINNED}**, but the latest PyPI release is **${LATEST}**. A stale pin runs an out-of-date detection engine while the gate looks green.
 
-          Review the newer release, then bump \`version:\` in \`.github/workflows/worm-guard.yml\`.
+          Review the newer release, then bump \`version:\` in \`.github/workflows/saw-guard.yml\`.
 
           _Opened by \`scanner-pin-freshness.yml\`. This issue is de-duplicated and auto-updated; it closes on its own once the pin catches up._"
           num=$(gh issue list --state open --label scanner-pin-stale --limit 1 --json number --jq '.[0].number // empty')

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Decide whether worm-guard's pinned scanner version has drifted behind the latest PyPI release.
+"""Decide whether SAW Guard's pinned scanner version has drifted behind the latest PyPI release.
 
-The worm-guard gate pins `stayawakebot` to an exact version for a reproducible gate; a pin that
+The SAW Guard gate pins `stayawakebot` to an exact version for a reproducible gate; a pin that
 goes stale silently runs an out-of-date detection engine. This is the decision half of
 `.github/workflows/scanner-pin-freshness.yml`: the pure `pinned_version` / `is_stale` helpers are
 unit-tested offline (tests/test_pin_freshness.py), and `main()` does the one network fetch and
@@ -15,16 +15,16 @@ import re
 import sys
 import urllib.request
 
-WORM_GUARD = ".github/workflows/worm-guard.yml"
+SAW_GUARD = ".github/workflows/saw-guard.yml"
 PYPI_JSON = "https://pypi.org/pypi/stayawakebot/json"
 
-# The `version:` the worm-guard step pins (e.g. `version: '0.1.12'`), quoted or bare.
+# The `version:` the SAW Guard step pins (e.g. `version: '0.1.12'`), quoted or bare.
 _PIN_RE = re.compile(r"^\s*version:\s*['\"]?([0-9][0-9A-Za-z.+\-]*)['\"]?\s*$", re.MULTILINE)
 
 
-def pinned_version(worm_guard_text: str) -> str | None:
-    """Extract the pinned scanner version from worm-guard.yml text, or None if not found."""
-    m = _PIN_RE.search(worm_guard_text)
+def pinned_version(gate_text: str) -> str | None:
+    """Extract the pinned scanner version from saw-guard.yml text, or None if not found."""
+    m = _PIN_RE.search(gate_text)
     return m.group(1) if m else None
 
 
@@ -46,10 +46,10 @@ def _latest_from_pypi() -> str:
 
 
 def main() -> int:
-    text = open(WORM_GUARD, encoding="utf-8").read()
+    text = open(SAW_GUARD, encoding="utf-8").read()
     pinned = pinned_version(text)
     if not pinned:
-        print(f"::error::could not find a pinned scanner version in {WORM_GUARD}", file=sys.stderr)
+        print(f"::error::could not find a pinned scanner version in {SAW_GUARD}", file=sys.stderr)
         return 2
     latest = _latest_from_pypi()
     stale = is_stale(pinned, latest)

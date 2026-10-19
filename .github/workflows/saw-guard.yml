@@ -1,6 +1,6 @@
-name: Worm Guard — block infected merges
+name: SAW Guard — block infected merges
 
-# Dogfood: Strix scans its OWN repo. Gate PRs (catch injected indicators) and pushes to main
+# Dogfood: SAW Guard scans its OWN repo. Gate PRs (catch injected indicators) and pushes to main
 # (catch evil merges). This repo carries one INERT planted indicator on purpose
 # (tests/fixtures/infected/.gitignore); config/security.yml allowlists exactly that one file, so a
 # real payload anywhere else still fails the gate.
@@ -19,18 +19,18 @@ permissions:
   contents: read   # pure exit-code gate: green = clean, red = infected — keyed only on the verdict.
 
 jobs:
-  worm-guard:
+  saw-guard:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history for evil-merge detection)
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5   # v4.3.1
         with:
           fetch-depth: 0
-      - name: Scan this repo with Strix (config/security.yml is the single source of truth)
+      - name: Scan this repo with SAW Guard (config/security.yml is the single source of truth)
         uses: ./
         with:
           # Pin the scanner for a reproducible gate — don't float the thing that decides merges.
           # Bump deliberately after reviewing a newer release; scanner-pin-freshness.yml opens an
           # issue when this drifts behind the latest PyPI release so it can't silently go stale.
-          version: '0.6.2'
+          version: '0.12.3'
           config-file: config/security.yml

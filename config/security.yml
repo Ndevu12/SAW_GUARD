@@ -1,6 +1,6 @@
-# StayAwakeBot Strix — security config for this repo's own worm-guard self-gate.
+# SAW Guard — security config for this repo's own SAW Guard self-gate.
 #
-# Strix is itself a worm scanner, so it dogfoods itself: .github/workflows/worm-guard.yml runs the
+# SAW Guard is itself a worm scanner, so it dogfoods itself: .github/workflows/saw-guard.yml runs the
 # Action against this repo on every PR / push to main and fails on findings. This repo ships ONE
 # inert, intentionally-planted indicator so the Action can prove it detects worms:
 #   tests/fixtures/infected/.gitignore  ->  matches `gitignore-autopush-markers`

@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- **The Action is called SAW Guard everywhere.** The example to copy is `examples/saw-guard.yml`, and
+  it and the README pin SAW Guard and `actions/checkout` by commit SHA and the scanner at 0.12.3, as
+  code only; what each line does is in the text beside it.
 - **Docs: point consumers at `saw guard`** (from the `stayawakebot` package) as the automated way to install and verify this gate. `saw guard setup` installs it SHA-pinned to the latest release and opens pin-bump PRs; `saw guard check` verifies it is present, SHA-pinned, current, and a required check. The manual copy-paste + hardening checklist remain the source of truth (the least-privilege `contents: read` default and remediation-as-opt-in posture are unchanged).
 
 ## [0.1.4] — 2026-07-15
