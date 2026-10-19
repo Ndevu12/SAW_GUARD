@@ -1,0 +1,112 @@
+name: release
+
+# A vX.Y.Z tag drafts its GitHub release once the changelog and the tests pass. Publishing the draft
+# stays a person's act: the GitHub Marketplace listing is set only by the "Publish this Action to the
+# GitHub Marketplace" box in the release form. Publishing a release marked latest moves @v0 and @v1.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  release:
+    types: [published]
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check the changelog and the tests
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5   # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6.3.0
+        with:
+          python-version: '3.13'
+      - name: The changelog has this version's section
+        run: python3 .github/scripts/check_changelog_release.py "$GITHUB_REF_NAME"
+      - name: The guard package's tests pass
+        run: PYTHONPATH=. python3 -m unittest discover -s tests -v
+
+  draft:
+    name: Draft the GitHub release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Draft the release with generated notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            if [ "$(gh release view "$GITHUB_REF_NAME" --json isDraft -q .isDraft)" != true ]; then
+              echo "::notice::Release $GITHUB_REF_NAME is already published — left as it is."
+              exit 0
+            fi
+            echo "::notice::Release $GITHUB_REF_NAME is already drafted — left as it is."
+          else
+            gh release create "$GITHUB_REF_NAME" --draft --verify-tag --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi
+          url=$(gh release view "$GITHUB_REF_NAME" --json url -q .url)
+          {
+            echo "### $GITHUB_REF_NAME is drafted"
+            echo
+            echo "Open [the draft]($url), tick **Publish this Action to the GitHub Marketplace**, keep"
+            echo "**Set as the latest release**, and click **Publish release**. Publishing it moves"
+            echo "\`@v0\` and \`@v1\` to $GITHUB_REF_NAME."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  move-aliases:
+    name: Move @v0 and @v1 to the published release
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Move the aliases when this is the latest 0.x release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          if ! [[ "$TAG" =~ ^v0\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::notice::$TAG is not a 0.x release — @v0 and @v1 stay where they are."
+            exit 0
+          fi
+          latest=$(gh api "repos/$repo/releases/latest" -q .tag_name)
+          if [ "$latest" != "$TAG" ]; then
+            echo "::notice::$TAG is not the latest release ($latest is) — @v0 and @v1 stay where they are."
+            exit 0
+          fi
+          sha=$(gh api "repos/$repo/commits/$TAG" -q .sha)
+          refused=""
+          for alias in v0 v1; do
+            if gh api -X PATCH "repos/$repo/git/refs/tags/$alias" -f sha="$sha" -F force=true >/dev/null; then
+              echo "@$alias now points at $TAG ($sha)."
+            else
+              refused="$refused $alias"
+            fi
+          done
+          if [ -n "$refused" ]; then
+            {
+              echo "### Move the aliases by hand"
+              echo
+              echo "GitHub refused to move${refused} to $TAG with the workflow token. From a clone:"
+              echo
+              echo '```'
+              for alias in $refused; do echo "git push --force origin '$TAG^{commit}:refs/tags/$alias'"; done
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::GitHub refused to move${refused} to $TAG — the job summary has the commands to move them by hand."
+            exit 1
+          fi
