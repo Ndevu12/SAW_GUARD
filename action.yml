@@ -45,7 +45,8 @@ inputs:
       green. Requires `contents: write` and `pull-requests: write` permissions plus the
       repository setting "Allow GitHub Actions to create and approve pull requests". Without
       push access saw degrades down its fallback ladder (fork PR, else a git-am-able patch in
-      sab-patches/ plus a deduplicated issue) — the step summary says which happened.
+      sab-patches/ plus a deduplicated issue) — the `remediation` output says which happened, and
+      anything short of a pull request is flagged on the run with its cause.
       Default 'off'.
     required: false
     default: 'off'
@@ -106,6 +107,12 @@ outputs:
       too old to emit SARIF. Upload it yourself (e.g. github/codeql-action/upload-sarif) if you want
       code scanning but prefer to scope `security-events: write` in your own workflow.
     value: ${{ steps.scan.outputs.sarif }}
+  remediation:
+    description: >-
+      What `remediate: pr` came to: 'pr', 'fork-pr', 'patch', 'issue', 'prepared', 'skipped' or
+      'failed', or 'unknown' when the installed scanner cannot say. Empty when remediation did not
+      run.
+    value: ${{ steps.remediate.outputs.remediation }}
 
 runs:
   using: 'composite'
@@ -137,6 +144,11 @@ runs:
           exit 1
         fi
         echo "saw CLI OK ($(saw --version 2>/dev/null | head -n1))"
+
+    - name: SAW Guard — say when remediation cannot open a pull request
+      if: inputs.remediate == 'pr' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      shell: bash
+      run: echo "::warning title=SAW Guard remediation::remediate is 'pr', but this is a pull request from a fork — GitHub gives it a read-only token, so a fix can only be saved as a patch."
 
     - name: Run worm scan
       id: scan
@@ -264,6 +276,7 @@ runs:
         exit 0
 
     - name: Remediate — saw fix --pr (rolling security/auto-clean PR)
+      id: remediate
       if: inputs.remediate == 'pr' && steps.scan.outputs.infected != '0'
       shell: bash
       env:
@@ -276,8 +289,8 @@ runs:
       # in the PR has nothing to remediate; the red gate on the PR is the remedy). A failure
       # here fails the job loudly rather than pretending the guard remediated when it didn't.
       run: |
-        set -euo pipefail
-        if ! saw fix -h >/dev/null 2>&1; then
+        set -uo pipefail
+        if ! fix_help=$(saw fix -h 2>/dev/null); then
           echo "::error::remediate is 'pr' but the installed stayawakebot lacks 'saw fix' — set 'version' to a release that ships it." >&2
           exit 1
         fi
@@ -286,14 +299,22 @@ runs:
           cfg_flag=(-c "${{ steps.scan.outputs.config }}")
         fi
         cd "$GITHUB_WORKSPACE"
-        saw fix --pr "$GITHUB_WORKSPACE" "${cfg_flag[@]+"${cfg_flag[@]}"}" --no-stream
-        if compgen -G "$GITHUB_WORKSPACE/sab-patches/*.patch" >/dev/null; then
-          # Read-only fallback fired: the branch could not be pushed, so the fix exists only as
-          # patch files on this ephemeral runner. Say so where a human will see it.
-          echo "**SAW Guard remediation**: no push access — fix saved to \`sab-patches/*.patch\` on the runner. Set \`upload-artifact: true\` to keep it with the run, or grant \`contents: write\` + \`pull-requests: write\` for a fix PR." >> "$GITHUB_STEP_SUMMARY"
+        report=""
+        if [[ "$fix_help" == *--json* ]]; then
+          report="$RUNNER_TEMP/saw-guard-remediation.json"
+          saw fix --pr "$GITHUB_WORKSPACE" "${cfg_flag[@]+"${cfg_flag[@]}"}" --no-stream --json > "$report"
         else
-          echo "**SAW Guard remediation**: \`saw fix --pr\` ran — see the rolling \`security/auto-clean\` PR on this repo." >> "$GITHUB_STEP_SUMMARY"
+          saw fix --pr "$GITHUB_WORKSPACE" "${cfg_flag[@]+"${cfg_flag[@]}"}" --no-stream
         fi
+        rc=$?
+        patches=false
+        compgen -G "$GITHUB_WORKSPACE/sab-patches/*.patch" >/dev/null 2>&1 && patches=true
+        SAW_GUARD_REMEDIATION_REPORT="$report" SAW_GUARD_PATCHES="$patches" \
+        PYTHONPATH="$GITHUB_ACTION_PATH" python3 -m guard remediation || {
+          echo "remediation=unknown" >> "$GITHUB_OUTPUT"
+          echo "::warning title=SAW Guard remediation::could not read what remediation came to — see this step's log."
+        }
+        exit "$rc"
 
     # ── Visibility layer (issue #10) — strictly ADDITIVE, strictly NON-FATAL ────────────────
     # These steps route findings to where a reviewer looks (step summary, code scanning, an
@@ -330,7 +351,7 @@ runs:
         exit 0
 
     - name: SAW Guard — upload SARIF to code scanning (best-effort, additive)
-      if: inputs.upload-sarif == 'true' && steps.scan.outputs.sarif != ''
+      if: (success() || steps.remediate.outcome == 'failure') && inputs.upload-sarif == 'true' && steps.scan.outputs.sarif != ''
       shell: bash
       # Uploads the scanner's REDACTED SARIF to code scanning → Security tab + inline annotation on
       # the exact line. GITHUB_SHA/GITHUB_REF are correct for push AND the PR merge ref. A 403 (no
@@ -363,7 +384,7 @@ runs:
         exit 0
 
     - name: SAW Guard — stage redacted evidence for the artifact
-      if: inputs.upload-artifact == 'true'
+      if: (success() || steps.remediate.outcome == 'failure') && inputs.upload-artifact == 'true'
       shell: bash
       # Stage REDACTED artifacts only. NEVER the full-evidence report.json and never the raw
       # infected file. `sab-patches/*.patch` is a git-am-able diff that REMOVES the payload (its
@@ -383,7 +404,7 @@ runs:
         exit 0
 
     - name: SAW Guard — upload evidence artifact
-      if: inputs.upload-artifact == 'true'
+      if: (success() || steps.remediate.outcome == 'failure') && inputs.upload-artifact == 'true'
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
       with:
         # Per-job unique name (+ overwrite) so running SAW Guard in more than one job of a workflow
@@ -396,7 +417,7 @@ runs:
         retention-days: 7
 
     - name: SAW Guard — sticky PR comment with remediation guidance (best-effort, additive)
-      if: inputs.pr-comment == 'true' && github.event_name == 'pull_request'
+      if: (success() || steps.remediate.outcome == 'failure') && inputs.pr-comment == 'true' && github.event_name == 'pull_request'
       shell: bash
       # Post ONE sticky comment (found & updated in place via a hidden marker), reusing the exact
       # markdown the summary rendered (DRY). Body is passed as a file through `jq --rawfile`, so no

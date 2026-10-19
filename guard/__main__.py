@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Entrypoint / command dispatcher for the guard helpers.
 
-Two commands, both imperative shells around a pure renderer:
+Three commands, each an imperative shell around a pure renderer:
 
   * ``python3 -m guard summary`` (default) — render the actionable findings summary and write it to
     the step summary + the PR-comment source file (issue #10).
   * ``python3 -m guard log`` — print the redacted findings report to **stdout** for the CI log
     (issue #12).
+  * ``python3 -m guard remediation`` — set the ``remediation`` output, warn when remediation fell
+    short of a pull request, and say what it came to in the step summary (issue #26).
 
 Run with the repo root on ``PYTHONPATH`` (the action passes ``PYTHONPATH=$GITHUB_ACTION_PATH``).
 Every effect is best-effort: the visibility layer is strictly additive, so a missing/unwritable sink
@@ -16,6 +18,7 @@ from __future__ import annotations
 
 import sys
 
+from guard import remediation
 from guard.config import Config
 from guard.console import render_log
 from guard.report import load
@@ -62,7 +65,25 @@ def run_log(cfg: Config) -> int:
     return 0
 
 
-_COMMANDS = {"summary": run_summary, "log": run_log}
+def run_remediation(cfg: Config) -> int:
+    """Report what remediation came to. Takes the configuration. Returns 0."""
+    report = None
+    if cfg.remediation_report:
+        try:
+            with open(cfg.remediation_report, encoding="utf-8") as fh:
+                report = fh.read()
+        except OSError:
+            report = ""
+    came_to = remediation.read(report, patches=cfg.patches == "true")
+    _write(cfg.github_output, f"remediation={came_to.outcome}\n", "a")
+    warning = remediation.warning(came_to)
+    if warning:
+        print(warning)
+    _write(cfg.step_summary, remediation.summary_line(came_to), "a")
+    return 0
+
+
+_COMMANDS = {"summary": run_summary, "log": run_log, "remediation": run_remediation}
 
 
 def main(argv: list[str] | None = None) -> int:

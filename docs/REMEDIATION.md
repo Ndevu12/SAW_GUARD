@@ -33,8 +33,14 @@ Two deliberate semantics:
   remedy. What this mode catches is the repository itself being infected (the evil-merge case).
 
 Without push access (e.g. a fork PR's read-only token) saw walks its fallback ladder — fork PR,
-else a `git am`-able patch written to `sab-patches/` on the runner plus a deduplicated issue —
-and the step summary says which happened. To keep the patch, set `upload-artifact: true` (it bundles
+else a `git am`-able patch written to `sab-patches/` on the runner plus a deduplicated issue.
+The `remediation` output says which happened: `pr`, `fork-pr`, `patch`, `issue`, `prepared`,
+`skipped` or `failed`. Anything short of a pull request is flagged on the run as a warning that
+names the cause and what to change — the repository setting, a missing permission, a token that
+cannot push — and a pull request from a fork is flagged before the scan, since its token is
+read-only. The warning never changes the gate. A scanner too old to report the outcome gives
+`unknown`, with a warning to set `version` to a newer release. To keep the patch, set
+`upload-artifact: true` (it bundles
 `sab-patches/*.patch` alongside the redacted reports — see
 [Surfacing findings](SURFACING_FINDINGS.md)):
 

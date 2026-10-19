@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Remediation says what it came to (#26).** A `remediation` output reports whether
+  `remediate: pr` opened a pull request, a fork pull request, a patch or an issue, prepared a branch,
+  had nothing to fix, or failed. Anything short of a pull request is a warning on the run that names
+  the cause and what to change, such as the repository setting "Allow GitHub Actions to create and
+  approve pull requests", and a pull request from a fork is warned about before the scan. The gate is
+  unchanged. A failed remediation no longer skips the SARIF upload, the evidence artifact or the PR
+  comment. With a scanner too old to report the outcome, the output is `unknown` and the run says to
+  set `version` to a newer release.
+
 ### Changed
 
 - **The Action is called SAW Guard everywhere.** Its name, log lines, step summary and PR comment say
