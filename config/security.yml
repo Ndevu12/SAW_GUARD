@@ -18,3 +18,4 @@
 # self-gate is a backstop, not a substitute for branch protection.
 allowlist:
   - {signature: gitignore-autopush-markers, path_glob: "tests/fixtures/infected/.gitignore"}
+  - {signature: gitignore-autopush-markers, path_glob: "test/fixtures/infected/.gitignore"}
