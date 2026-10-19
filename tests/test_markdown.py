@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strix.markdown — the injection-safe primitives.
+"""guard.markdown — the injection-safe primitives.
 
 These are the ONE place attacker-controlled values (a repo path/filename) become safe to show,
 so each check is a real payload: a backtick that would close the span, a newline / bidi override
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import unittest
 
-from strix import markdown as md
+from guard import markdown as md
 
 
 class TestSanitize(unittest.TestCase):

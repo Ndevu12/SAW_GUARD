@@ -7,19 +7,19 @@ Two hard properties (issue #10, invariant #3):
   ``evidence`` snippet — not even the scanner's redacted ``preview``. Full evidence stays on
   the runner and in the scanner's own redacted SARIF / ``-d`` bundle.
 * **Escape untrusted values.** A finding ``path`` and the scanned ``target`` are
-  attacker-controlled; they are emitted ONLY through :mod:`strix.markdown` code spans, so a
+  attacker-controlled; they are emitted ONLY through :mod:`guard.markdown` code spans, so a
   crafted filename can neither break out of the span nor inject Markdown/HTML.
 
 :func:`render` returns ``(markdown, should_surface)`` and touches nothing outside its inputs,
-so the whole thing is unit-testable by constructing a :class:`~strix.config.Config`.
+so the whole thing is unit-testable by constructing a :class:`~guard.config.Config`.
 """
 from __future__ import annotations
 
-from strix.config import Config
-from strix.markdown import code, plain, sanitize, yaml_dq
-from strix.report import iter_findings
+from guard.config import Config
+from guard.markdown import code, plain, sanitize, yaml_dq
+from guard.report import iter_findings
 
-MARKER = "<!-- strix-worm-scan-summary -->"  # lets the PR-comment step find & update in place
+MARKER = "<!-- saw-guard-summary -->"  # lets the PR-comment step find & update in place
 
 
 def _finding_line(finding: dict) -> str:
@@ -94,9 +94,9 @@ def render(payload: dict | None, cfg: Config) -> tuple[str, bool]:
 
     if aborted:
         out += [
-            "## ⚠️ Strix — scan could not complete (failing closed)",
+            "## ⚠️ SAW Guard — scan could not complete (failing closed)",
             "",
-            "The worm scan did not produce a verdict Strix can trust (no target scanned, an "
+            "The worm scan did not produce a verdict SAW Guard can trust (no target scanned, an "
             "errored target, an unparseable report, or a usage error), so the gate fails "
             "**closed** — a security gate must never read a non-scan as clean.",
             "",
@@ -114,14 +114,14 @@ def render(payload: dict | None, cfg: Config) -> tuple[str, bool]:
         return "\n".join(out) + "\n", True
 
     if verdict == "clean" or (not findings and verdict != "infected"):
-        out += ["## ✅ Strix — clean",
+        out += ["## ✅ SAW Guard — clean",
                 "",
                 f"No worm indicators across {targets} target(s)."]
         return "\n".join(out) + "\n", False
 
     icon, tier = ("🛑", "worm indicators found") if verdict == "infected" else ("🟡", "suspect-tier findings to review")
     out += [
-        f"## {icon} Strix — {tier}",
+        f"## {icon} SAW Guard — {tier}",
         "",
         f"**Verdict: `{sanitize(verdict or 'infected', 20)}`** · {sanitize(str(total), 10)} "
         f"finding(s) across {sanitize(targets, 10)} target(s). Here is what was found and "

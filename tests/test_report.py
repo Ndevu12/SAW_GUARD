@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strix.report — tolerant load + worst-first flatten.
+"""guard.report — tolerant load + worst-first flatten.
 
 ``load`` must degrade to ``None`` on a missing / empty / unparseable report (so an aborted
 scan renders the 'could not complete' summary rather than crashing), and ``iter_findings``
@@ -12,7 +12,7 @@ import os
 import tempfile
 import unittest
 
-from strix import report
+from guard import report
 
 
 class TestLoad(unittest.TestCase):

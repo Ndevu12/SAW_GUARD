@@ -18,17 +18,17 @@ from dataclasses import dataclass, fields
 
 # field name → environment variable name.
 _ENV = {
-    "redacted_report": "STRIX_REDACTED",     # scanner's REDACTED latest.json (preferred data source)
-    "full_report": "STRIX_REPORT",           # full-evidence report.json (fallback; evidence never rendered)
-    "summary_out": "STRIX_SUMMARY_OUT",       # where the shareable body is written (PR comment reuses it)
+    "redacted_report": "SAW_GUARD_REDACTED",     # scanner's REDACTED latest.json (preferred data source)
+    "full_report": "SAW_GUARD_REPORT",           # full-evidence report.json (fallback; evidence never rendered)
+    "summary_out": "SAW_GUARD_SUMMARY_OUT",       # where the shareable body is written (PR comment reuses it)
     "step_summary": "GITHUB_STEP_SUMMARY",    # the run-page step summary (GitHub-provided)
-    "verdict": "STRIX_VERDICT",               # clean | suspicious | infected | "" (aborted)
-    "infected": "STRIX_INFECTED",
-    "suspicious": "STRIX_SUSPICIOUS",
-    "findings": "STRIX_FINDINGS",
-    "scan_rc": "STRIX_SCAN_RC",               # saw scan exit code: 0 clean / 1 infected / 2 usage
-    "config_input": "STRIX_CONFIG_INPUT",     # the workflow's config-file input (for the repro command)
-    "patches": "STRIX_PATCHES",               # "true" when saw fix wrote sab-patches/*.patch
+    "verdict": "SAW_GUARD_VERDICT",               # clean | suspicious | infected | "" (aborted)
+    "infected": "SAW_GUARD_INFECTED",
+    "suspicious": "SAW_GUARD_SUSPICIOUS",
+    "findings": "SAW_GUARD_FINDINGS",
+    "scan_rc": "SAW_GUARD_SCAN_RC",               # saw scan exit code: 0 clean / 1 infected / 2 usage
+    "config_input": "SAW_GUARD_CONFIG_INPUT",     # the workflow's config-file input (for the repro command)
+    "patches": "SAW_GUARD_PATCHES",               # "true" when saw fix wrote sab-patches/*.patch
 }
 
 

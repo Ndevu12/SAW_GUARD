@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""strix.logsafe — CI-log injection safety.
+"""guard.logsafe — CI-log injection safety.
 
 An attacker-controlled value printed to the CI log must not emit an ANSI/control sequence, start a
 new line, or smuggle a GitHub Actions workflow command (``::error::`` / ``::set-output``). Each
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import unittest
 
-from strix.logsafe import logsafe
+from guard.logsafe import logsafe
 
 
 class TestLogsafe(unittest.TestCase):

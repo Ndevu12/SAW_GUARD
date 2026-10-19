@@ -1,4 +1,4 @@
-# StayAwakeBot Strix — Auto-remediation (`remediate: pr`)
+# SAW Guard — Auto-remediation (`remediate: pr`)
 
 A guard that can also clean up. With `remediate: pr`, an infected verdict triggers `saw fix --pr`:
 saw rebuilds the fix in an isolated worktree off the remote's **default branch** (it never commits
@@ -15,7 +15,7 @@ permissions:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: Ndevu12/strix@v1
+      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
         with:
           remediate: pr
 ```
@@ -39,7 +39,7 @@ and the step summary says which happened. To keep the patch, set `upload-artifac
 [Surfacing findings](SURFACING_FINDINGS.md)):
 
 ```yaml
-      - uses: Ndevu12/strix@v1
+      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
         with:
           remediate: pr
           upload-artifact: true   # keeps sab-patches/*.patch (+ redacted reports) with the run
