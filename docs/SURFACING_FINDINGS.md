@@ -17,7 +17,7 @@ permissions:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         with:
           upload-sarif: true      # Security tab + inline annotation on the exact line
           upload-artifact: true   # redacted reports + SARIF + fix patches, attached to the run
@@ -65,7 +65,7 @@ separate job), leave `upload-sarif` off and use the `sarif` output with
 [`github/codeql-action/upload-sarif`](https://github.com/github/codeql-action):
 
 ```yaml
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         id: guard
       - uses: github/codeql-action/upload-sarif@v3
         if: always() && steps.guard.outputs.sarif != ''

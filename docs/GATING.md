@@ -19,6 +19,6 @@ gate must never read "nothing scanned" as "clean". To soften *those* too, use Gi
 soft-fail on the step:
 
 ```yaml
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         continue-on-error: true    # nothing fails the job, not even a broken scan
 ```

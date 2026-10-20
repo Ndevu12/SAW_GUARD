@@ -15,7 +15,7 @@ permissions:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         with:
           remediate: pr
 ```
@@ -45,7 +45,7 @@ read-only. The warning never changes the gate. A scanner too old to report the o
 [Surfacing findings](SURFACING_FINDINGS.md)):
 
 ```yaml
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         with:
           remediate: pr
           upload-artifact: true   # keeps sab-patches/*.patch (+ redacted reports) with the run

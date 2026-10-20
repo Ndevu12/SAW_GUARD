@@ -26,14 +26,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         with:
-          version: '0.13.0'
+          version: '0.13.1'
           config-file: config/security.yml
 ```
 
-Here `93fe465d…` is SAW Guard v0.1.4 and `3d3c42e5…` is `actions/checkout` v7.0.1. `version` pins
-the `stayawakebot` release from PyPI, 0.13.0 here; left blank it tracks the latest. `config-file` is
+Here `7d3ef571…` is SAW Guard v0.2.0 and `3d3c42e5…` is `actions/checkout` v7.0.1. `version` pins
+the `stayawakebot` release from PyPI, 0.13.1 here; left blank it tracks the latest. `config-file` is
 your committed saw allowlist and is optional.
 
 `fetch-depth: 0` is required for evil-merge detection (it needs the full commit graph). Deploying
@@ -92,7 +92,7 @@ SAW Guard is `0.x` (pre-1.0). In order of preference:
 
 - **A commit SHA — `Ndevu12/SAW_GUARD@<sha>`.** The security-sound choice, so the gate's own logic can't
   change under you. This is what `saw guard setup` emits.
-- **An exact release tag — `@v0.1.4`.** Reproducible; bump it deliberately.
+- **An exact release tag — `@v0.2.0`.** Reproducible; bump it deliberately.
 - **A moving alias — `@v0`** (or the legacy `@v1`). Points at the latest `0.x` release, advanced as
   part of a release. Convenient, but a moving tag can change under you — prefer a SHA or an exact tag
   for anything you rely on.
