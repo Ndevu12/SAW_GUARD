@@ -6,7 +6,7 @@ and `allowlist` govern the scan, and only the checked-out repo is scanned. Keep 
 that one file rather than duplicating it into the workflow:
 
 ```yaml
-      - uses: Ndevu12/SAW_GUARD@93fe465d7b0266c6010778999b73b591ae082f3e
+      - uses: Ndevu12/SAW_GUARD@7d3ef571f0094c223902fcfc500838abc46e1d7b
         with:
           config-file: config/security.yml
 ```
